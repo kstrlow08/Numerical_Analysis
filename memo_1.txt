@@ -1,0 +1,65 @@
+import pygame
+import sys
+from collections import deque
+
+# Pygame 초기화
+pygame.init()
+
+# 화면 크기 설정
+screen = pygame.display.set_mode((1500, 1000))
+
+# 색상 정의
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+
+# 구면파의 최대 개수 및 유지 시간 설정
+MAX_WAVES = 20  # 화면에 동시에 존재할 수 있는 구면파의 최대 개수
+WAVE_LIFETIME = 5000  # 구면파가 화면에 유지되는 시간 (밀리초)
+WAVE_SPEED = 0.4  # 구면파의 퍼져나가는 속도 (픽셀/밀리초)
+
+# 구면파들을 저장할 큐
+waves = deque()
+
+# 마지막 파동 생성 시간을 저장할 변수
+last_wave_time = 0
+
+# 메인 루프
+while True:
+    # 이벤트 처리
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+
+    # 현재 시간 가져오기
+    current_time = pygame.time.get_ticks()
+
+    # 마우스 버튼이 눌려있는지 확인
+    mouse_pressed = pygame.mouse.get_pressed()
+    if mouse_pressed[0]:  # 왼쪽 버튼이 눌려있다면
+        mouse_pos = pygame.mouse.get_pos()
+
+        # 500 밀리초 간격으로 파동 생성
+        if current_time - last_wave_time > 10:
+            waves.append((mouse_pos, current_time))
+            last_wave_time = current_time
+
+            # 구면파의 개수가 최대 개수를 넘으면 오래된 구면파 제거
+            if len(waves) > MAX_WAVES:
+                waves.popleft()
+
+    # 배경 색상 설정
+    screen.fill(BLACK)
+
+    # 구면파 그리기 (유지 시간 내에 있는 구면파들만)
+    for wave in list(waves):
+        pos, time_clicked = wave
+        time_elapsed = current_time - time_clicked
+        if time_elapsed < WAVE_LIFETIME:
+            radius = int(time_elapsed * WAVE_SPEED)
+            pygame.draw.circle(screen, WHITE, pos, radius, 1)
+        else:
+            waves.popleft()  # 유지 시간이 지난 구면파 제거
+
+    # 화면 업데이트
+    pygame.display.flip()
